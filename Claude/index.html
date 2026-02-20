@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BookMind AI — Your intelligent personal library manager">
+  <meta name="theme-color" content="#0e0e12">
+  <title>BookMind AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="js/bundle.js" defer></script>
+</head>
+<body>
+
+  <!-- ══ HEADER ══ -->
+  <header>
+    <div class="header-inner">
+      <a class="logo" href="#" aria-label="BookMind AI home">
+        <div class="logo-icon" aria-hidden="true">📚</div>
+        <div class="logo-text">Book<span>Mind</span></div>
+      </a>
+
+      <nav class="header-nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-view="library"   type="button">Library</button>
+        <button class="nav-btn"        data-view="dashboard" type="button">Dashboard</button>
+      </nav>
+
+      <div class="header-right">
+        <div class="search-wrap" role="search">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="search"
+                 id="searchInput"
+                 placeholder="Search titles, authors, genres…"
+                 aria-label="Search books"
+                 autocomplete="off"
+                 maxlength="200">
+          <button class="search-clear" id="searchClear" aria-label="Clear search" type="button">✕</button>
+        </div>
+        <button class="add-btn" type="button" onclick="UI.openModal()" aria-label="Add new book">
+          <span aria-hidden="true">＋</span> Add Book
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ STATS BAR ══ -->
+  <div class="stats-bar" role="status" aria-live="polite" aria-label="Library statistics">
+    <div class="stats-inner" id="statsBar"></div>
+  </div>
+
+  <!-- ══════════════════════════════
+       VIEW: LIBRARY
+  ══════════════════════════════ -->
+  <div id="view-library" class="view active">
+    <main>
+      <!-- Filter bar with live counts -->
+      <div class="filter-bar" role="tablist" aria-label="Filter books">
+        <button class="filter-btn active" data-filter="all"        role="tab" aria-selected="true"  type="button">All <span class="filter-count">0</span></button>
+        <button class="filter-btn"        data-filter="unread"     role="tab" aria-selected="false" type="button">Unread <span class="filter-count">0</span></button>
+        <button class="filter-btn"        data-filter="read"       role="tab" aria-selected="false" type="button">Read <span class="filter-count">0</span></button>
+        <button class="filter-btn"        data-filter="inprogress" role="tab" aria-selected="false" type="button">In Progress <span class="filter-count">0</span></button>
+      </div>
+
+      <!-- Book grid -->
+      <div class="grid" id="booksGrid" role="list" aria-label="Book collection"></div>
+    </main>
+  </div>
+
+  <!-- ══════════════════════════════
+       VIEW: DASHBOARD
+  ══════════════════════════════ -->
+  <div id="view-dashboard" class="view">
+    <main class="dashboard-main">
+
+      <!-- KPI Cards -->
+      <section class="dash-section" aria-labelledby="dash-heading-kpi">
+        <h2 class="dash-heading" id="dash-heading-kpi">
+          <span class="dash-heading-icon">📊</span> Reading Dashboard
+        </h2>
+        <div class="kpi-grid" id="kpiGrid"></div>
+      </section>
+
+      <!-- Goals + AI Insights -->
+      <div class="dash-two-col">
+
+        <!-- Goal & Badges -->
+        <section class="dash-section" aria-labelledby="dash-heading-goal">
+          <h2 class="dash-heading" id="dash-heading-goal">
+            <span class="dash-heading-icon">🎯</span>
+            Monthly Goal
+            <button class="goal-edit-btn" type="button" onclick="UI.openGoalModal()" title="Edit goal" aria-label="Edit monthly goal">✏️</button>
+          </h2>
+          <div id="goalCard"></div>
+          <div class="badges-grid" id="badgesGrid" aria-label="Achievement badges" role="list"></div>
+        </section>
+
+        <!-- AI Insights -->
+        <section class="dash-section insights-section" aria-labelledby="dash-heading-ai">
+          <h2 class="dash-heading" id="dash-heading-ai">
+            <span class="ai-pulse" aria-hidden="true"></span> AI Insights
+          </h2>
+          <div class="insights-list" id="insightsList"></div>
+        </section>
+
+      </div>
+
+      <!-- Genre Analytics -->
+      <section class="dash-section" aria-labelledby="dash-heading-genre">
+        <h2 class="dash-heading" id="dash-heading-genre">
+          <span class="dash-heading-icon">📈</span> Genre Analytics
+        </h2>
+        <div class="analytics-row">
+          <div class="chart-card">
+            <div class="chart-label">Distribution</div>
+            <div class="chart-wrap">
+              <canvas id="genreChart" role="img" aria-label="Genre distribution doughnut chart"></canvas>
+            </div>
+          </div>
+          <div class="genre-stats-col" id="genreStats"></div>
+        </div>
+      </section>
+
+      <!-- Data Management -->
+      <section class="dash-section" aria-labelledby="dash-heading-data">
+        <h2 class="dash-heading" id="dash-heading-data">
+          <span class="dash-heading-icon">💾</span> Data Management
+        </h2>
+        <div class="data-actions">
+          <button class="btn-data" type="button" onclick="UI.exportLibrary()">📦 Export Library</button>
+          <label class="btn-data" style="cursor:pointer;">
+            📂 Import Library
+            <input type="file" accept=".json" id="importFileInput" hidden
+                   onchange="UI.importLibrary(this.files[0]); this.value='';">
+          </label>
+        </div>
+        <p class="data-note">Export saves a .json backup of your entire library and settings. Import restores from a previous export.</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ══ ADD BOOK MODAL ══ -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Add New Book</div>
+        <button class="modal-close" type="button" onclick="UI.closeModal()" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="fTitle">Title <span class="required" aria-label="required">*</span></label>
+          <input type="text" id="fTitle" placeholder="Enter book title…" maxlength="300" autocomplete="off" aria-required="true">
+        </div>
+        <div class="form-group">
+          <label for="fAuthor">Author <span class="required" aria-label="required">*</span></label>
+          <input type="text" id="fAuthor" placeholder="Author name…" maxlength="200" autocomplete="off" aria-required="true">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fGenre">Genre</label>
+            <select id="fGenre" aria-label="Select genre">
+              <option value="">Select genre</option>
+              <option>Fiction</option>
+              <option>Non-Fiction</option>
+              <option>Science Fiction</option>
+              <option>Fantasy</option>
+              <option>Mystery</option>
+              <option>Thriller</option>
+              <option>Biography</option>
+              <option>History</option>
+              <option>Self-Help</option>
+              <option>Romance</option>
+              <option>Horror</option>
+              <option>Poetry</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fPages">Total Pages <span class="required" aria-label="required">*</span></label>
+            <input type="number" id="fPages" placeholder="e.g. 320" min="1" max="50000" aria-required="true">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fRating">Rating (1–5)</label>
+            <input type="number" id="fRating" placeholder="Optional ⭐" min="1" max="5">
+          </div>
+          <div class="form-group">
+            <label for="fDateRead">Date Finished</label>
+            <input type="date" id="fDateRead" aria-label="Date finished reading">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" type="button" onclick="UI.closeModal()">Cancel</button>
+        <button class="btn-submit" type="button" onclick="UI.handleAddBook()">Add to Library</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOAL MODAL ══ -->
+  <div class="modal-overlay" id="goalModalOverlay" role="dialog" aria-modal="true" aria-labelledby="goal-modal-title" aria-hidden="true">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-title" id="goal-modal-title">🎯 Set Monthly Goal</div>
+        <button class="modal-close" type="button" onclick="UI.closeGoalModal()" aria-label="Close goal modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="gTarget">Books to read this month</label>
+          <input type="number" id="gTarget" placeholder="e.g. 4" min="1" max="999" aria-required="true">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" type="button" onclick="UI.closeGoalModal()">Cancel</button>
+        <button class="btn-submit" type="button" onclick="UI.handleSaveGoal()">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ AI CELEBRATION ══ -->
+  <div id="aiCelebration" class="ai-celebration" aria-live="assertive" role="status"></div>
+
+  <!-- ══ AI PANEL BACKDROP ══ -->
+  <div id="aiBackdrop" class="ai-backdrop" onclick="AIAssistant.closePanel()" aria-hidden="true"></div>
+
+  <!-- ══ AI PANEL ══ -->
+  <div id="aiPanel" class="aip" role="complementary" aria-label="AI Reading Analyst" aria-hidden="true"></div>
+
+  <!-- ══ AI FAB ══ -->
+  <button id="aiFab" class="ai-fab" onclick="UI.openAIPanel()" aria-label="Open AI Reading Analyst" title="AI Insights">
+    <span class="ai-fab-icon" aria-hidden="true">🤖</span>
+    <span class="ai-fab-label">AI Insights</span>
+    <span class="ai-fab-pulse" aria-hidden="true"></span>
+  </button>
+
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- bundle loaded via defer in <head> -->
+
+</body>
+</html>
